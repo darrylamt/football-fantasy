@@ -16,110 +16,73 @@ export default function RegisterPage() {
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
-    setError('')
+    setLoading(true); setError('')
 
     const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
-    if (signUpError) {
-      setError(signUpError.message)
-      setLoading(false)
-      return
-    }
+    if (signUpError) { setError(signUpError.message); setLoading(false); return }
+    if (!data.user) { setError('Registration failed. Please try again.'); setLoading(false); return }
 
-    if (!data.user) {
-      setError('Registration failed. Please try again.')
-      setLoading(false)
-      return
-    }
-
-    // Get active season
-    const { data: season } = await supabase
-      .from('seasons')
-      .select('id')
-      .eq('is_active', true)
-      .single()
-
+    const { data: season } = await supabase.from('seasons').select('id').eq('is_active', true).single()
     if (season) {
       await supabase.from('fantasy_teams').insert({
         user_id: data.user.id,
         season_id: season.id,
         name: teamName,
-        free_transfers: 0, // unlimited on first pick
+        free_transfers: 0,
       })
     }
 
-    router.push('/squad')
-    router.refresh()
+    router.push('/squad'); router.refresh()
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'linear-gradient(135deg, #0a1400 0%, #0d1f0d 100%)' }}>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="font-barlow font-black text-4xl text-[#4ade80] uppercase tracking-widest">GFF</div>
-          <div className="text-gray-400 text-sm mt-1">Ghana Fantasy Football</div>
+          <div className="font-barlow font-black text-5xl text-green-600 uppercase tracking-widest">GFF</div>
+          <div className="text-gray-500 text-sm mt-1 font-medium">Ghana Fantasy Football</div>
         </div>
 
-        <div className="bg-[#112211] border border-[#1f3d1f] rounded-2xl p-8">
-          <h1 className="font-barlow font-bold text-2xl uppercase text-white mb-6">Create Account</h1>
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
+          <h1 className="font-barlow font-black text-2xl uppercase text-gray-900 mb-6">Create Account</h1>
 
           <form onSubmit={handleRegister} className="space-y-4">
-            <div>
-              <label className="block text-xs font-barlow uppercase text-gray-400 mb-1.5">Team Name</label>
-              <input
-                type="text"
-                value={teamName}
-                onChange={e => setTeamName(e.target.value)}
-                required
-                maxLength={30}
-                className="w-full bg-[#0d1f0d] border border-[#1f3d1f] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#4ade80] transition-colors"
-                placeholder="Your team name"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-barlow uppercase text-gray-400 mb-1.5">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                className="w-full bg-[#0d1f0d] border border-[#1f3d1f] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#4ade80] transition-colors"
-                placeholder="you@example.com"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-barlow uppercase text-gray-400 mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="w-full bg-[#0d1f0d] border border-[#1f3d1f] rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#4ade80] transition-colors"
-                placeholder="Min 6 characters"
-              />
-            </div>
+            {[
+              { label: 'Team Name', key: 'teamName', type: 'text', placeholder: 'Your team name', value: teamName, set: setTeamName, max: 30 },
+              { label: 'Email', key: 'email', type: 'email', placeholder: 'you@example.com', value: email, set: setEmail },
+              { label: 'Password', key: 'password', type: 'password', placeholder: 'Min 6 characters', value: password, set: setPassword, min: 6 },
+            ].map(f => (
+              <div key={f.key}>
+                <label className="block text-xs font-semibold uppercase text-gray-500 mb-1.5 tracking-wide">{f.label}</label>
+                <input
+                  type={f.type}
+                  value={f.value}
+                  onChange={e => f.set(e.target.value)}
+                  required
+                  maxLength={f.max}
+                  minLength={f.min}
+                  placeholder={f.placeholder}
+                  className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-colors"
+                />
+              </div>
+            ))}
 
             {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-red-400 text-sm">
-                {error}
-              </div>
+              <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-600 text-sm">{error}</div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#4ade80] text-[#0a1400] font-barlow font-black uppercase text-lg rounded-lg py-3 hover:bg-[#22c55e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-green-600 text-white font-barlow font-black uppercase text-lg rounded-lg py-3 hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Creating account...' : 'Create Account'}
+              {loading ? 'Creating account…' : 'Create Account'}
             </button>
           </form>
 
-          <p className="text-center text-gray-400 text-sm mt-6">
+          <p className="text-center text-gray-500 text-sm mt-6">
             Already have an account?{' '}
-            <Link href="/login" className="text-[#4ade80] hover:underline font-medium">
-              Sign in
-            </Link>
+            <Link href="/login" className="text-green-600 hover:underline font-semibold">Sign in</Link>
           </p>
         </div>
       </div>
