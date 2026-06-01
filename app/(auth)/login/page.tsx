@@ -73,6 +73,15 @@ export default function LoginPage() {
             No account?{' '}
             <Link href="/register" className="text-gray-900 hover:underline">Create one</Link>
           </p>
+
+          <div className="mt-6 pt-5 border-t border-gray-100">
+            <p className="text-xs text-gray-400">
+              Admin?{' '}
+              Sign in above then navigate to{' '}
+              <Link href="/admin" className="text-gray-600 hover:underline font-mono">/admin</Link>{' '}
+              to manage players, fixtures and match data.
+            </p>
+          </div>
         </div>
       </div>
     </div>
