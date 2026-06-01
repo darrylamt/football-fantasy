@@ -15,13 +15,11 @@ export default async function PlayersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-barlow font-black text-4xl uppercase text-gray-900">Players</h1>
-        <p className="text-gray-500 text-sm mt-0.5">{players?.length ?? 0} players in the league</p>
+        <h1 className="font-barlow font-black text-3xl text-gray-900">Players</h1>
+        <p className="text-sm text-gray-400 mt-0.5">{players?.length ?? 0} players</p>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-        <PlayerBrowser players={players ?? []} />
-      </div>
+      <PlayerBrowser players={players ?? []} />
     </div>
   )
 }

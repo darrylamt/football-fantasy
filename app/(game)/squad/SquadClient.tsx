@@ -70,49 +70,45 @@ export default function SquadClient({ fantasyTeam, gameweek, allPlayers, initial
 
   return (
     <div className="space-y-5">
-      {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-barlow font-black text-4xl uppercase text-gray-900">My Squad</h1>
-          <p className="text-gray-500 text-sm">Gameweek {gameweek.number}</p>
+          <h1 className="font-barlow font-black text-3xl text-gray-900">My Squad</h1>
+          <p className="text-sm text-gray-400">Gameweek {gameweek.number}</p>
         </div>
         <DeadlineCountdown deadline={gameweek.deadline} />
       </div>
 
-      {/* Budget + count */}
-      <div className="flex gap-3 flex-wrap">
-        <div className="bg-white border border-gray-200 rounded-xl px-5 py-3 shadow-sm">
-          <div className="text-xs font-semibold uppercase text-gray-400 tracking-wide">Budget Left</div>
-          <div className={`font-barlow font-black text-2xl ${remainingBudget < 0 ? 'text-red-600' : 'text-green-600'}`}>
+      <div className="flex gap-4 text-sm">
+        <div>
+          <span className="text-gray-400">Budget </span>
+          <span className={`font-medium ${remainingBudget < 0 ? 'text-red-600' : 'text-gray-900'}`}>
             {formatPrice(remainingBudget)}
-          </div>
+          </span>
         </div>
-        <div className="bg-white border border-gray-200 rounded-xl px-5 py-3 shadow-sm">
-          <div className="text-xs font-semibold uppercase text-gray-400 tracking-wide">Players</div>
-          <div className="font-barlow font-black text-2xl text-gray-900">{picks.length}<span className="text-gray-400">/15</span></div>
+        <div>
+          <span className="text-gray-400">Players </span>
+          <span className="font-medium text-gray-900">{picks.length}<span className="text-gray-400">/15</span></span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Pitch */}
         <div className="lg:col-span-2">
           <PitchCanvas picks={picks} onPicksChange={setPicks} readonly={isDeadlinePast} />
         </div>
 
-        {/* Sidebar */}
         <div className="space-y-3">
           {!isDeadlinePast && (
             <button
               onClick={() => setShowBrowser(!showBrowser)}
-              className="w-full bg-green-600 text-white font-barlow font-black uppercase text-lg rounded-xl py-3 hover:bg-green-700 transition-colors"
+              className="w-full bg-gray-900 text-white text-sm font-medium rounded-md py-2.5 hover:bg-gray-800 transition-colors"
             >
-              {showBrowser ? 'Hide Browser' : '+ Add Players'}
+              {showBrowser ? 'Hide browser' : '+ Add players'}
             </button>
           )}
 
           {showBrowser && !isDeadlinePast && (
-            <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-              <h2 className="font-barlow font-bold uppercase text-gray-900 mb-3">Player Browser</h2>
+            <div className="bg-white border border-gray-100 rounded-lg p-4">
+              <p className="text-xs text-gray-400 mb-3">Click a player to add them</p>
               <PlayerBrowser
                 players={allPlayers}
                 excludeIds={excludeIds}
@@ -123,19 +119,19 @@ export default function SquadClient({ fantasyTeam, gameweek, allPlayers, initial
           )}
 
           {saveError && (
-            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-red-600 text-sm whitespace-pre-line">{saveError}</div>
+            <div className="border border-red-200 rounded-md px-3 py-2.5 text-red-600 text-sm whitespace-pre-line">{saveError}</div>
           )}
           {saveSuccess && (
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 text-sm font-bold">Squad saved! ✓</div>
+            <div className="border border-gray-200 rounded-md px-3 py-2.5 text-gray-700 text-sm">Squad saved</div>
           )}
 
           {!isDeadlinePast && (
             <button
               onClick={handleSave}
               disabled={saving}
-              className="w-full bg-white border border-green-300 text-green-700 font-barlow font-black uppercase text-lg rounded-xl py-3 hover:bg-green-50 transition-colors disabled:opacity-50"
+              className="w-full border border-gray-200 text-gray-700 text-sm font-medium rounded-md py-2.5 hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
-              {saving ? 'Saving…' : 'Save Team'}
+              {saving ? 'Saving…' : 'Save team'}
             </button>
           )}
         </div>

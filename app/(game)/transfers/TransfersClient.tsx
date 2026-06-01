@@ -8,11 +8,8 @@ import { makeTransfer } from './actions'
 
 type PickWithPlayer = FantasyPick & { players: Player }
 
-const posBadge: Record<string, string> = {
-  GK: 'bg-yellow-100 text-yellow-700',
-  DEF: 'bg-blue-100 text-blue-700',
-  MID: 'bg-green-100 text-green-700',
-  FWD: 'bg-red-100 text-red-700',
+const posColor: Record<string, string> = {
+  GK: 'text-yellow-600', DEF: 'text-blue-500', MID: 'text-green-600', FWD: 'text-red-500',
 }
 
 export default function TransfersClient({
@@ -38,7 +35,6 @@ export default function TransfersClient({
   const priceDiff = playerIn && playerOut ? Number(playerIn.price) - Number(playerOut.players.price) : 0
   const transferCost = freeTransfers > 0 ? 0 : 4
   const newBank = Number(fantasyTeam.bank) - priceDiff
-
   const currentIds = picks.map(p => p.player_id)
 
   function selectOut(pick: PickWithPlayer) {
@@ -62,11 +58,10 @@ export default function TransfersClient({
 
     if (result.error) { setError(result.error); return }
 
-    // Update local state
     setPicks(prev => prev.map(p =>
       p.id === playerOut.id ? { ...p, player_id: playerIn.id, players: playerIn } : p
     ))
-    setSuccess(`${playerOut.players.display_name ?? playerOut.players.name} → ${playerIn.display_name ?? playerIn.name} confirmed!`)
+    setSuccess(`${playerOut.players.display_name ?? playerOut.players.name} → ${playerIn.display_name ?? playerIn.name} confirmed`)
     setPlayerOut(null); setPlayerIn(null)
   }
 
@@ -82,104 +77,90 @@ export default function TransfersClient({
       <button
         disabled={isDeadlinePast}
         onClick={() => selectOut(pick)}
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border text-left transition-all ${
-          selected
-            ? 'border-red-400 bg-red-50 ring-1 ring-red-300'
-            : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
-        } disabled:opacity-50 disabled:cursor-not-allowed`}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 border-b border-gray-100 last:border-0 text-left transition-colors ${
+          selected ? 'bg-gray-50' : 'hover:bg-gray-50'
+        } disabled:opacity-40 disabled:cursor-not-allowed`}
       >
-        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: pick.players.real_teams?.primary_color ?? '#d1d5db' }} />
+        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: pick.players.real_teams?.primary_color ?? '#d1d5db' }} />
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-sm text-gray-900 truncate">{pick.players.display_name ?? pick.players.name}</div>
-          <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-            <span>{pick.players.real_teams?.short_name}</span>
-            <span className={`font-barlow font-bold uppercase px-1.5 rounded ${posBadge[pick.players.position]}`}>{pick.players.position}</span>
+          <div className="text-sm text-gray-900 truncate">{pick.players.display_name ?? pick.players.name}</div>
+          <div className="text-xs text-gray-400 mt-0.5">
+            {pick.players.real_teams?.short_name}
+            {' · '}
+            <span className={`font-medium ${posColor[pick.players.position]}`}>{pick.players.position}</span>
           </div>
         </div>
         <div className="text-right flex-shrink-0">
-          <div className="font-barlow font-bold text-green-600 text-sm">{formatPrice(pick.players.price)}</div>
-          <div className="text-xs text-gray-400">{pick.players.total_points} pts</div>
+          <div className="text-sm text-gray-900">{formatPrice(pick.players.price)}</div>
+          {selected && <div className="text-xs text-red-500 font-medium">Transfer out</div>}
         </div>
-        {selected && <span className="text-red-500 text-xs font-bold ml-1">OUT</span>}
       </button>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-barlow font-black text-4xl uppercase text-gray-900">Transfers</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Gameweek {gameweek.number}</p>
+          <h1 className="font-barlow font-black text-3xl text-gray-900">Transfers</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Gameweek {gameweek.number}</p>
         </div>
-        <div className="flex gap-3">
-          <div className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm text-center">
-            <div className="text-xs font-semibold uppercase text-gray-400">Free Transfers</div>
-            <div className="font-barlow font-black text-2xl text-green-600">{freeTransfers === 0 ? '∞' : freeTransfers}</div>
+        <div className="flex gap-4 text-sm">
+          <div>
+            <span className="text-gray-400">Free transfers </span>
+            <span className="font-medium text-gray-900">{freeTransfers === 0 ? '∞' : freeTransfers}</span>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl px-4 py-2.5 shadow-sm text-center">
-            <div className="text-xs font-semibold uppercase text-gray-400">Bank</div>
-            <div className={`font-barlow font-black text-2xl ${Number(fantasyTeam.bank) < 0 ? 'text-red-600' : 'text-green-600'}`}>
+          <div>
+            <span className="text-gray-400">Bank </span>
+            <span className={`font-medium ${Number(fantasyTeam.bank) < 0 ? 'text-red-600' : 'text-gray-900'}`}>
               {formatPrice(Number(fantasyTeam.bank))}
-            </div>
+            </span>
           </div>
         </div>
       </div>
 
       {isDeadlinePast && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-4 text-red-700 text-sm font-semibold">
+        <div className="border border-gray-200 rounded-md px-4 py-3 text-sm text-gray-500">
           Deadline has passed — transfers are locked for this gameweek.
         </div>
       )}
 
-      {/* Transfer panel */}
       {playerOut && (
-        <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm space-y-4">
-          <h2 className="font-barlow font-bold uppercase text-gray-900">Select Replacement</h2>
+        <div className="bg-white border border-gray-100 rounded-lg p-4 space-y-4">
+          <h2 className="text-sm font-medium text-gray-900">Select replacement</h2>
 
-          {/* Transfer preview */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-2">
-              <span className="text-red-500 font-bold text-sm">OUT</span>
-              <span className="font-semibold text-gray-900 text-sm">{playerOut.players.display_name ?? playerOut.players.name}</span>
-              <span className="text-green-600 font-barlow font-bold text-sm">{formatPrice(playerOut.players.price)}</span>
-            </div>
-            <span className="text-gray-400 font-bold">→</span>
-            {playerIn ? (
-              <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-4 py-2">
-                <span className="text-green-600 font-bold text-sm">IN</span>
-                <span className="font-semibold text-gray-900 text-sm">{playerIn.display_name ?? playerIn.name}</span>
-                <span className="text-green-600 font-barlow font-bold text-sm">{formatPrice(playerIn.price)}</span>
-              </div>
-            ) : (
-              <div className="text-gray-400 text-sm italic">pick a player below</div>
-            )}
+          <div className="flex items-center gap-2 flex-wrap text-sm">
+            <span className="text-gray-500">{playerOut.players.display_name ?? playerOut.players.name}</span>
+            <span className="text-gray-300">→</span>
+            {playerIn
+              ? <span className="font-medium text-gray-900">{playerIn.display_name ?? playerIn.name}</span>
+              : <span className="text-gray-400 italic">pick a player below</span>
+            }
           </div>
 
           {playerIn && (
-            <div className="flex items-center gap-4 text-sm flex-wrap">
-              <span className="text-gray-600">
-                Budget after: <strong className={newBank < 0 ? 'text-red-600' : 'text-green-600'}>{formatPrice(newBank)}</strong>
-              </span>
-              <span className="text-gray-600">
-                Transfer cost: <strong className={transferCost > 0 ? 'text-red-600' : 'text-gray-900'}>{transferCost > 0 ? `-${transferCost} pts` : 'Free'}</strong>
-              </span>
+            <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
+              <span>Bank after: <span className={newBank < 0 ? 'text-red-600 font-medium' : 'text-gray-900 font-medium'}>{formatPrice(newBank)}</span></span>
+              <span>Cost: <span className={transferCost > 0 ? 'text-red-600 font-medium' : 'text-gray-900 font-medium'}>{transferCost > 0 ? `-${transferCost} pts` : 'Free'}</span></span>
             </div>
           )}
 
-          {error && <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-600 text-sm">{error}</div>}
-          {success && <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-green-700 text-sm font-semibold">✓ {success}</div>}
+          {error && <div className="border border-red-200 rounded-md px-3 py-2 text-red-600 text-sm">{error}</div>}
+          {success && <div className="border border-gray-200 rounded-md px-3 py-2 text-gray-600 text-sm">{success}</div>}
 
           {playerIn && (
             <div className="flex gap-2">
               <button
                 onClick={handleConfirm}
                 disabled={saving || newBank < 0}
-                className="bg-green-600 text-white font-barlow font-black uppercase px-6 py-2.5 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                className="bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-800 transition-colors disabled:opacity-50"
               >
-                {saving ? 'Confirming…' : 'Confirm Transfer'}
+                {saving ? 'Confirming…' : 'Confirm transfer'}
               </button>
-              <button onClick={() => { setPlayerOut(null); setPlayerIn(null) }} className="bg-gray-100 text-gray-700 font-barlow font-bold uppercase px-6 py-2.5 rounded-lg hover:bg-gray-200 transition-colors">
+              <button
+                onClick={() => { setPlayerOut(null); setPlayerIn(null) }}
+                className="border border-gray-200 text-gray-600 text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
+              >
                 Cancel
               </button>
             </div>
@@ -196,18 +177,15 @@ export default function TransfersClient({
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Starting XI */}
         <div>
-          <h2 className="font-barlow font-bold uppercase text-gray-700 mb-3">Starting XI — click to transfer out</h2>
-          <div className="space-y-1.5">
+          <p className="text-xs text-gray-400 mb-2">Starting XI — click to transfer out</p>
+          <div className="bg-white border border-gray-100 rounded-lg overflow-hidden">
             {starting.map(p => <SquadPlayer key={p.id} pick={p} />)}
           </div>
         </div>
-
-        {/* Bench */}
         <div>
-          <h2 className="font-barlow font-bold uppercase text-gray-700 mb-3">Bench</h2>
-          <div className="space-y-1.5">
+          <p className="text-xs text-gray-400 mb-2">Bench</p>
+          <div className="bg-white border border-gray-100 rounded-lg overflow-hidden">
             {bench.map(p => <SquadPlayer key={p.id} pick={p} />)}
           </div>
         </div>
