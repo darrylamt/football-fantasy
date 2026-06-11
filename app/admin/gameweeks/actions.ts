@@ -104,6 +104,9 @@ export async function finalizeGameweek(gameweekId: string) {
 
   await supabase.from('gameweeks').update({ status: 'finished' }).eq('id', gameweekId)
 
+  const playerTotalsError = await recomputePlayerTotals(supabase)
+  if (playerTotalsError) return { error: playerTotalsError }
+
   const recomputeError = await recomputeTotalsAndRanks(supabase)
   if (recomputeError) return { error: recomputeError }
 
@@ -112,6 +115,24 @@ export async function finalizeGameweek(gameweekId: string) {
   revalidatePath('/points')
   revalidatePath('/leagues')
   return { error: null }
+}
+
+/** Rebuilds every player's season total from their gameweek stats. */
+async function recomputePlayerTotals(supabase: Awaited<ReturnType<typeof createServiceClient>>) {
+  const { data: statRows } = await supabase
+    .from('player_gameweek_stats')
+    .select('player_id, calculated_points')
+
+  const totals = new Map<string, number>()
+  for (const s of statRows ?? []) {
+    totals.set(s.player_id, (totals.get(s.player_id) ?? 0) + (s.calculated_points ?? 0))
+  }
+
+  for (const [playerId, total] of totals) {
+    const { error } = await supabase.from('players').update({ total_points: total }).eq('id', playerId)
+    if (error) return error.message
+  }
+  return null
 }
 
 async function recomputeTotalsAndRanks(supabase: Awaited<ReturnType<typeof createServiceClient>>) {

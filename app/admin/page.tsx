@@ -18,11 +18,12 @@ export default async function AdminDashboard() {
   ]
 
   const quickLinks = [
-    { href: '/admin/players', label: 'Manage Players', desc: 'Add, edit or remove players' },
+    { href: '/admin/matches', label: 'Match Centre', desc: 'Score, line-ups and events in one place' },
+    { href: '/admin/players', label: 'Manage Players', desc: 'Add players, set availability and news' },
     { href: '/admin/teams', label: 'Manage Teams', desc: 'Club info and colours' },
-    { href: '/admin/gameweeks', label: 'Gameweeks', desc: 'Set deadlines and status' },
-    { href: '/admin/fixtures', label: 'Fixtures', desc: 'Schedule and enter results' },
-    { href: '/admin/stats', label: 'Stats Entry', desc: 'Enter player stats after matches' },
+    { href: '/admin/gameweeks', label: 'Gameweeks', desc: 'Deadlines, status and Finalize & Score' },
+    { href: '/admin/fixtures', label: 'Fixtures', desc: 'Schedule the matches' },
+    { href: '/admin/stats', label: 'Stats Entry', desc: 'Per-player stat editing (fallback)' },
   ]
 
   return (

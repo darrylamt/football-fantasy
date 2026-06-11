@@ -6,6 +6,7 @@ const adminLinks = [
   { href: '/admin/players', label: 'Players' },
   { href: '/admin/gameweeks', label: 'Gameweeks' },
   { href: '/admin/fixtures', label: 'Fixtures' },
+  { href: '/admin/matches', label: 'Match Centre' },
   { href: '/admin/stats', label: 'Stats Entry' },
 ]
 
