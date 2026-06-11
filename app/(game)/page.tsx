@@ -3,11 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import DeadlineCountdown from '@/components/ui/DeadlineCountdown'
 import type { RealTeam } from '@/types'
-import { formatPrice } from '@/lib/utils/format'
-
-const posColor: Record<string, string> = {
-  GK: 'text-yellow-600', DEF: 'text-blue-500', MID: 'text-green-600', FWD: 'text-red-500',
-}
+import { formatPrice, formatDeadline } from '@/lib/utils/format'
 
 function formatKickoff(dt?: string) {
   if (!dt) return 'TBC'
@@ -59,73 +55,68 @@ export default async function HomePage() {
   ])
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4">
 
-      {/* Platform header */}
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-barlow font-black text-4xl text-gray-900 tracking-tight">Fantasy</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
-            {gameweek
-              ? `Gameweek ${gameweek.number} · ${gameweek.status}`
-              : 'Ghana Fantasy Football'}
-          </p>
+      {/* Hero */}
+      <div className="fpl-hero rounded-lg px-5 py-6 sm:px-8">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="font-barlow font-black text-4xl text-white tracking-tight leading-none">Fantasy</h1>
+            <p className="text-white/60 text-sm mt-1.5">
+              {gameweek ? `Gameweek ${gameweek.number} · ${formatDeadline(gameweek.deadline)}` : 'Ghana Premier League'}
+            </p>
+            {gameweek && <div className="mt-1"><DeadlineCountdown deadline={gameweek.deadline} light /></div>}
+          </div>
+          <div className="flex gap-2">
+            <Link href="/squad" className="bg-[#00ff87] text-[#37003c] text-sm font-bold px-4 py-2.5 rounded-md hover:bg-[#00e57a] transition-colors">
+              Pick Team
+            </Link>
+            <Link href="/transfers" className="bg-white/10 text-white text-sm font-bold px-4 py-2.5 rounded-md hover:bg-white/20 transition-colors border border-white/20">
+              Transfers
+            </Link>
+          </div>
         </div>
-        {gameweek && <DeadlineCountdown deadline={gameweek.deadline} />}
+
+        {/* Your stats inside hero */}
+        {fantasyTeam ? (
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-6 max-w-xl">
+            <div className="bg-white/10 rounded-md px-3 py-2.5 backdrop-blur-sm">
+              <div className="text-[10px] uppercase tracking-wider text-white/50">GW Points</div>
+              <div className="font-barlow font-black text-2xl text-[#00ff87]">{gwPoints}</div>
+            </div>
+            <div className="bg-white/10 rounded-md px-3 py-2.5 backdrop-blur-sm">
+              <div className="text-[10px] uppercase tracking-wider text-white/50">Total</div>
+              <div className="font-barlow font-black text-2xl text-white">{fantasyTeam.total_points}</div>
+            </div>
+            <div className="bg-white/10 rounded-md px-3 py-2.5 backdrop-blur-sm">
+              <div className="text-[10px] uppercase tracking-wider text-white/50">Rank</div>
+              <div className="font-barlow font-black text-2xl text-white">
+                {fantasyTeam.overall_rank ? `#${fantasyTeam.overall_rank.toLocaleString()}` : '–'}
+              </div>
+            </div>
+            <div className="hidden sm:block bg-white/10 rounded-md px-3 py-2.5 backdrop-blur-sm">
+              <div className="text-[10px] uppercase tracking-wider text-white/50">Team</div>
+              <div className="font-barlow font-bold text-lg text-white truncate">{fantasyTeam.name}</div>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-6 bg-white/10 rounded-md px-4 py-3 max-w-xl flex items-center justify-between gap-3 backdrop-blur-sm">
+            <span className="text-sm text-white/80">You don't have a team yet — pick your squad to join.</span>
+            <Link href="/squad" className="flex-shrink-0 bg-[#00ff87] text-[#37003c] text-xs font-bold px-3 py-2 rounded-md hover:bg-[#00e57a] transition-colors">
+              Get started
+            </Link>
+          </div>
+        )}
       </div>
 
-      {/* Your team strip */}
-      {fantasyTeam ? (
-        <div className="bg-white border border-gray-100 rounded-lg px-4 py-3 flex items-center gap-5 flex-wrap">
-          <div className="min-w-0">
-            <div className="text-xs text-gray-400">Your team</div>
-            <div className="text-sm font-medium text-gray-900 truncate">{fantasyTeam.name}</div>
-          </div>
-          <div className="hidden sm:block w-px h-6 bg-gray-100" />
-          <div>
-            <div className="text-xs text-gray-400">GW pts</div>
-            <div className="font-barlow font-black text-lg text-gray-900">{gwPoints}</div>
-          </div>
-          <div>
-            <div className="text-xs text-gray-400">Total</div>
-            <div className="font-barlow font-black text-lg text-gray-900">{fantasyTeam.total_points}</div>
-          </div>
-          {fantasyTeam.overall_rank ? (
-            <div>
-              <div className="text-xs text-gray-400">Rank</div>
-              <div className="font-barlow font-black text-lg text-gray-900">#{fantasyTeam.overall_rank.toLocaleString()}</div>
-            </div>
-          ) : null}
-          <div className="ml-auto flex items-center gap-3 text-xs flex-shrink-0">
-            <Link href="/squad" className="text-gray-500 hover:text-gray-900 transition-colors">Squad</Link>
-            <span className="text-gray-200">·</span>
-            <Link href="/transfers" className="text-gray-500 hover:text-gray-900 transition-colors">Transfers</Link>
-            <span className="text-gray-200">·</span>
-            <Link href="/points" className="text-gray-500 hover:text-gray-900 transition-colors">Points</Link>
-          </div>
-        </div>
-      ) : (
-        <div className="border border-gray-100 rounded-lg p-5 flex items-center justify-between gap-4">
-          <div>
-            <div className="text-sm font-medium text-gray-900">No fantasy team yet</div>
-            <div className="text-xs text-gray-400 mt-0.5">Pick your squad to join the fantasy league</div>
-          </div>
-          <Link href="/squad" className="flex-shrink-0 bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-md hover:bg-gray-800 transition-colors">
-            Get started
-          </Link>
-        </div>
-      )}
-
-      {/* Results + Upcoming fixtures */}
+      {/* Results + Fixtures */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-        {/* Recent results */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide">Recent Results</h2>
-            <Link href="/results" className="text-xs text-gray-400 hover:text-gray-700 transition-colors">View all</Link>
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="bg-[#37003c] px-4 py-2.5 flex items-center justify-between">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-white">Results</h2>
+            <Link href="/results" className="text-[11px] text-[#00ff87] hover:underline">View all</Link>
           </div>
-          <div className="bg-white border border-gray-100 rounded-lg overflow-hidden divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100">
             {(recentResults ?? []).length === 0 ? (
               <div className="px-4 py-6 text-center text-sm text-gray-400">No results yet.</div>
             ) : (recentResults ?? []).map(f => {
@@ -134,17 +125,17 @@ export default async function HomePage() {
               return (
                 <div key={f.id} className="flex items-center gap-2 px-4 py-2.5">
                   <div className="flex-1 flex items-center gap-1.5 justify-end min-w-0">
-                    <span className="text-xs text-gray-700 truncate">{home?.short_name}</span>
+                    <span className="text-xs font-semibold text-[#37003c] truncate">{home?.short_name}</span>
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: home?.primary_color ?? '#d1d5db' }} />
                   </div>
                   <div className="flex-shrink-0 w-14 text-center">
-                    <span className="font-barlow font-black text-sm text-gray-900">
-                      {f.home_score} <span className="text-gray-300">–</span> {f.away_score}
+                    <span className="bg-[#37003c] text-white font-barlow font-bold text-sm rounded px-2 py-0.5">
+                      {f.home_score}–{f.away_score}
                     </span>
                   </div>
                   <div className="flex-1 flex items-center gap-1.5 min-w-0">
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: away?.primary_color ?? '#d1d5db' }} />
-                    <span className="text-xs text-gray-700 truncate">{away?.short_name}</span>
+                    <span className="text-xs font-semibold text-[#37003c] truncate">{away?.short_name}</span>
                   </div>
                 </div>
               )
@@ -152,13 +143,12 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* Upcoming fixtures */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide">Upcoming Fixtures</h2>
-            <Link href="/fixtures" className="text-xs text-gray-400 hover:text-gray-700 transition-colors">View all</Link>
+        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="bg-[#37003c] px-4 py-2.5 flex items-center justify-between">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-white">Fixtures</h2>
+            <Link href="/fixtures" className="text-[11px] text-[#00ff87] hover:underline">View all</Link>
           </div>
-          <div className="bg-white border border-gray-100 rounded-lg overflow-hidden divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100">
             {(upcomingFixtures ?? []).length === 0 ? (
               <div className="px-4 py-6 text-center text-sm text-gray-400">No fixtures scheduled.</div>
             ) : (upcomingFixtures ?? []).map(f => {
@@ -167,19 +157,17 @@ export default async function HomePage() {
               return (
                 <div key={f.id} className="flex items-center gap-2 px-4 py-2.5">
                   <div className="flex-1 flex items-center gap-1.5 justify-end min-w-0">
-                    <span className="text-xs text-gray-700 truncate">{home?.short_name}</span>
+                    <span className="text-xs font-semibold text-[#37003c] truncate">{home?.short_name}</span>
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: home?.primary_color ?? '#d1d5db' }} />
                   </div>
                   <div className="flex-shrink-0 w-14 text-center">
-                    <span className="text-xs text-gray-400">vs</span>
+                    <span className="text-[11px] text-gray-400">vs</span>
                   </div>
                   <div className="flex-1 flex items-center gap-1.5 min-w-0">
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: away?.primary_color ?? '#d1d5db' }} />
-                    <span className="text-xs text-gray-700 truncate">{away?.short_name}</span>
+                    <span className="text-xs font-semibold text-[#37003c] truncate">{away?.short_name}</span>
                   </div>
-                  <div className="hidden sm:block flex-shrink-0 text-right">
-                    <span className="text-xs text-gray-400">{formatKickoff(f.kickoff_time)}</span>
-                  </div>
+                  <span className="hidden sm:block text-[11px] text-gray-400 flex-shrink-0">{formatKickoff(f.kickoff_time)}</span>
                 </div>
               )
             })}
@@ -188,39 +176,35 @@ export default async function HomePage() {
       </div>
 
       {/* Top players */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wide">Top Players</h2>
-          <Link href="/players" className="text-xs text-gray-400 hover:text-gray-700 transition-colors">View all</Link>
+      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+        <div className="bg-[#37003c] px-4 py-2.5 flex items-center justify-between">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-white">Most Points</h2>
+          <Link href="/players" className="text-[11px] text-[#00ff87] hover:underline">View all</Link>
         </div>
-        <div className="bg-white border border-gray-100 rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left px-4 py-2 text-xs text-gray-400 w-8">#</th>
-                <th className="text-left px-4 py-2 text-xs text-gray-400">Player</th>
-                <th className="text-left px-4 py-2 text-xs text-gray-400 hidden sm:table-cell">Club</th>
-                <th className="text-left px-4 py-2 text-xs text-gray-400">Pos</th>
-                <th className="text-right px-4 py-2 text-xs text-gray-400 hidden sm:table-cell">Price</th>
-                <th className="text-right px-4 py-2 text-xs text-gray-400">Pts</th>
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-gray-100">
+              <th className="text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 w-8">#</th>
+              <th className="text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Player</th>
+              <th className="text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 hidden sm:table-cell">Club</th>
+              <th className="text-left px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Pos</th>
+              <th className="text-right px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 hidden sm:table-cell">Price</th>
+              <th className="text-right px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Pts</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {(topPlayers ?? []).map((p, i) => (
+              <tr key={p.id} className="hover:bg-[#37003c]/5 transition-colors">
+                <td className="px-4 py-2.5 text-xs text-gray-400">{i + 1}</td>
+                <td className="px-4 py-2.5 text-sm font-semibold text-[#37003c]">{p.display_name ?? p.name}</td>
+                <td className="px-4 py-2.5 text-xs text-gray-400 hidden sm:table-cell">{(p as any).real_teams?.short_name}</td>
+                <td className="px-4 py-2.5 text-xs text-gray-500">{p.position}</td>
+                <td className="px-4 py-2.5 text-xs text-gray-500 text-right hidden sm:table-cell">{formatPrice(p.price)}</td>
+                <td className="px-4 py-2.5 text-sm font-bold text-[#37003c] text-right">{p.total_points}</td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {(topPlayers ?? []).map((p, i) => (
-                <tr key={p.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-2.5 text-xs text-gray-400">{i + 1}</td>
-                  <td className="px-4 py-2.5 text-sm text-gray-900">{p.display_name ?? p.name}</td>
-                  <td className="px-4 py-2.5 text-xs text-gray-400 hidden sm:table-cell">{(p as any).real_teams?.short_name}</td>
-                  <td className="px-4 py-2.5 text-xs">
-                    <span className={`font-medium ${posColor[p.position]}`}>{p.position}</span>
-                  </td>
-                  <td className="px-4 py-2.5 text-xs text-gray-400 text-right hidden sm:table-cell">{formatPrice(p.price)}</td>
-                  <td className="px-4 py-2.5 text-sm font-medium text-gray-900 text-right">{p.total_points}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
 
     </div>

@@ -1,7 +1,8 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import type { FantasyPick, Player } from '@/types'
+import { revalidatePath } from 'next/cache'
+import type { ChipType, FantasyPick, Player } from '@/types'
 
 type PickWithPlayer = FantasyPick & { players: Player }
 
@@ -33,5 +34,50 @@ export async function saveSquad(fantasyTeamId: string, gameweekId: string, picks
     return { error: error.message }
   }
 
+  revalidatePath('/squad')
+  return { error: null }
+}
+
+/** Activates a chip for the given gameweek. Each chip can be used once a season. */
+export async function playChip(fantasyTeamId: string, gameweekId: string, chip: ChipType) {
+  const supabase = await createClient()
+
+  const { data: gw } = await supabase.from('gameweeks').select('deadline').eq('id', gameweekId).single()
+  if (!gw) return { error: 'Gameweek not found' }
+  if (new Date(gw.deadline) <= new Date()) return { error: 'Deadline has passed' }
+
+  const { error } = await supabase.from('chips_used').insert({
+    fantasy_team_id: fantasyTeamId,
+    gameweek_id: gameweekId,
+    chip,
+  })
+  if (error) {
+    if (error.code === '23505') return { error: 'You have already used this chip this season' }
+    return { error: error.message }
+  }
+
+  revalidatePath('/squad')
+  revalidatePath('/transfers')
+  return { error: null }
+}
+
+/** Cancels a chip before the deadline. */
+export async function cancelChip(fantasyTeamId: string, gameweekId: string, chip: ChipType) {
+  const supabase = await createClient()
+
+  const { data: gw } = await supabase.from('gameweeks').select('deadline').eq('id', gameweekId).single()
+  if (!gw) return { error: 'Gameweek not found' }
+  if (new Date(gw.deadline) <= new Date()) return { error: 'Deadline has passed — chip is locked in' }
+
+  const { error } = await supabase
+    .from('chips_used')
+    .delete()
+    .eq('fantasy_team_id', fantasyTeamId)
+    .eq('gameweek_id', gameweekId)
+    .eq('chip', chip)
+  if (error) return { error: error.message }
+
+  revalidatePath('/squad')
+  revalidatePath('/transfers')
   return { error: null }
 }

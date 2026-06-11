@@ -1,17 +1,49 @@
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
+
+:root {
+  --fpl-purple: #37003c;
+  --fpl-purple-dark: #240b36;
+  --fpl-green: #00ff87;
+  --fpl-cyan: #04f5ff;
+  --fpl-pink: #e90052;
+  --fpl-bg: #f4f4f6;
+}
 
 * { box-sizing: border-box; }
 
 body {
-  background-color: #fafafa;
-  color: #111827;
+  background-color: var(--fpl-bg);
+  color: #37003c;
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
 }
 
 .font-barlow { font-family: 'Barlow Condensed', sans-serif; }
 
-::-webkit-scrollbar { width: 5px; }
+/* Signature FPL cyan→green gradient strip */
+.fpl-gradient {
+  background: linear-gradient(90deg, var(--fpl-cyan) 0%, var(--fpl-green) 100%);
+}
+
+/* Purple hero with subtle radial glow, used on page headers */
+.fpl-hero {
+  background:
+    radial-gradient(120% 160% at 90% 10%, rgba(4, 245, 255, 0.25) 0%, transparent 45%),
+    radial-gradient(100% 140% at 10% 90%, rgba(233, 0, 82, 0.3) 0%, transparent 50%),
+    linear-gradient(115deg, var(--fpl-purple) 0%, var(--fpl-purple-dark) 100%);
+}
+
+/* Striped FPL pitch */
+.fpl-pitch {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #00a543 0px, #00a543 56px,
+      #00b04a 56px, #00b04a 112px
+    );
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 9999px; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 9999px; }

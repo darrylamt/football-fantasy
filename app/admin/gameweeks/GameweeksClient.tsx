@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { Gameweek, Season } from '@/types'
-import { createGameweek, updateGameweekStatus, setCurrentGameweek } from './actions'
+import { createGameweek, updateGameweekStatus, setCurrentGameweek, finalizeGameweek } from './actions'
 import { formatDeadline } from '@/lib/utils/format'
 
 const statuses = ['upcoming', 'active', 'finished'] as const
@@ -12,6 +12,18 @@ export default function GameweeksClient({ gameweeks: initial, seasons }: { gamew
   const [adding, setAdding] = useState(false)
   const [form, setForm] = useState({ season_id: seasons.find(s => s.is_active)?.id ?? '', number: '', deadline: '' })
   const [loading, setLoading] = useState(false)
+  const [finalizing, setFinalizing] = useState<string | null>(null)
+  const [finalizeMsg, setFinalizeMsg] = useState('')
+
+  async function handleFinalize(gw: Gameweek) {
+    if (!confirm(`Finalize GW${gw.number}? This scores all fantasy teams (auto-subs, captain points, chips), marks the gameweek finished and recalculates ranks.`)) return
+    setFinalizing(gw.id); setFinalizeMsg('')
+    const result = await finalizeGameweek(gw.id)
+    setFinalizing(null)
+    if (result.error) { setFinalizeMsg(`Error: ${result.error}`); return }
+    setFinalizeMsg(`GW${gw.number} finalized — picks scored and ranks updated.`)
+    setGameweeks(prev => prev.map(g => g.id === gw.id ? { ...g, status: 'finished' } : g))
+  }
 
   async function handleAdd() {
     setLoading(true)
@@ -69,6 +81,14 @@ export default function GameweeksClient({ gameweeks: initial, seasons }: { gamew
         </div>
       )}
 
+      {finalizeMsg && (
+        <div className={`rounded-lg px-4 py-3 text-sm font-semibold ${
+          finalizeMsg.startsWith('Error') ? 'bg-red-900/30 border border-red-700 text-red-300' : 'bg-[#1f3d1f] border border-[#4ade80]/40 text-[#4ade80]'
+        }`}>
+          {finalizeMsg}
+        </div>
+      )}
+
       <div className="bg-[#112211] border border-[#1f3d1f] rounded-xl overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -100,7 +120,13 @@ export default function GameweeksClient({ gameweeks: initial, seasons }: { gamew
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`font-barlow uppercase text-xs ${statusColor[gw.status]}`}>{gw.status}</span>
+                  <button
+                    onClick={() => handleFinalize(gw)}
+                    disabled={finalizing === gw.id}
+                    className="bg-[#4ade80] text-[#0a1400] font-barlow font-bold uppercase text-xs px-3 py-1.5 rounded hover:bg-[#22c55e] transition-colors disabled:opacity-50"
+                  >
+                    {finalizing === gw.id ? 'Scoring…' : 'Finalize & Score'}
+                  </button>
                 </td>
               </tr>
             ))}

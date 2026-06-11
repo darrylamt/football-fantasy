@@ -13,10 +13,10 @@ export default async function PlayersPage() {
     .order('total_points', { ascending: false })
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="font-barlow font-black text-3xl text-gray-900">Players</h1>
-        <p className="text-sm text-gray-400 mt-0.5">{players?.length ?? 0} players</p>
+    <div className="space-y-4">
+      <div className="fpl-hero rounded-lg px-5 py-5 sm:px-6">
+        <h1 className="font-barlow font-black text-3xl text-white leading-none">Player Statistics</h1>
+        <p className="text-white/60 text-sm mt-1">{players?.length ?? 0} players in the league</p>
       </div>
 
       <PlayerBrowser players={players ?? []} />

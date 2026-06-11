@@ -15,9 +15,11 @@ export default async function LeaguesPage() {
 
   if (!fantasyTeam) {
     return (
-      <div className="space-y-6">
-        <h1 className="font-barlow font-black text-4xl uppercase text-gray-900">Leagues</h1>
-        <div className="bg-white border border-gray-200 rounded-xl p-12 text-center text-gray-400 shadow-sm">
+      <div className="space-y-4">
+        <div className="fpl-hero rounded-lg px-5 py-5 sm:px-6">
+          <h1 className="font-barlow font-black text-3xl text-white leading-none">Leagues</h1>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-12 text-center text-sm text-gray-400">
           Create a fantasy team first to join leagues.
         </div>
       </div>

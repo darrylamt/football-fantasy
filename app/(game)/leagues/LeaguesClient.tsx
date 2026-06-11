@@ -49,22 +49,27 @@ export default function LeaguesClient({ leagues, myTeamId }: { leagues: LeagueWi
     : []
 
   const tabs = [
-    { key: 'standings', label: 'My leagues' },
+    { key: 'standings', label: 'My Leagues' },
     { key: 'create',    label: 'Create' },
     { key: 'join',      label: 'Join' },
   ] as const
 
+  const inputClass = "w-full border border-gray-200 rounded-md px-3 py-2.5 text-sm text-[#37003c] placeholder-gray-400 bg-white focus:outline-none focus:border-[#37003c]"
+
   return (
-    <div className="space-y-6">
-      <h1 className="font-barlow font-black text-3xl text-gray-900">Leagues</h1>
+    <div className="space-y-4">
+      <div className="fpl-hero rounded-lg px-5 py-5 sm:px-6">
+        <h1 className="font-barlow font-black text-3xl text-white leading-none">Leagues</h1>
+        <p className="text-white/60 text-sm mt-1">Compete against friends in classic or head-to-head leagues</p>
+      </div>
 
       <div className="flex gap-1">
         {tabs.map(t => (
           <button
             key={t.key}
             onClick={() => { setTab(t.key); setMsg(null) }}
-            className={`text-sm px-4 py-1.5 rounded-md transition-colors ${
-              tab === t.key ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-900'
+            className={`text-sm font-semibold px-4 py-2 rounded-md transition-colors ${
+              tab === t.key ? 'bg-[#37003c] text-white' : 'text-[#37003c]/60 hover:text-[#37003c] hover:bg-[#37003c]/5'
             }`}
           >
             {t.label}
@@ -73,10 +78,10 @@ export default function LeaguesClient({ leagues, myTeamId }: { leagues: LeagueWi
       </div>
 
       {tab === 'standings' && (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-1 space-y-1">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="lg:col-span-1 space-y-1.5">
             {leagues.length === 0 ? (
-              <div className="text-sm text-gray-400">No leagues yet.</div>
+              <div className="text-sm text-gray-400 px-1">No leagues yet — create or join one.</div>
             ) : (
               leagues.map(l => (
                 <button
@@ -84,12 +89,12 @@ export default function LeaguesClient({ leagues, myTeamId }: { leagues: LeagueWi
                   onClick={() => setActiveLeague(l)}
                   className={`w-full text-left px-3 py-2.5 rounded-md border transition-colors ${
                     activeLeague?.id === l.id
-                      ? 'border-gray-300 bg-gray-50'
-                      : 'border-gray-100 bg-white hover:border-gray-200'
+                      ? 'border-[#00ff87] bg-white ring-1 ring-[#00ff87]'
+                      : 'border-gray-200 bg-white hover:border-[#37003c]/40'
                   }`}
                 >
-                  <div className="text-sm font-medium text-gray-900 truncate">{l.name}</div>
-                  <div className="text-xs text-gray-400 mt-0.5">{l.members.length} members · {l.type}</div>
+                  <div className="text-sm font-semibold text-[#37003c] truncate">{l.name}</div>
+                  <div className="text-[11px] text-gray-400 mt-0.5">{l.members.length} members · {l.type === 'h2h' ? 'Head-to-Head' : 'Classic'}</div>
                 </button>
               ))
             )}
@@ -97,34 +102,32 @@ export default function LeaguesClient({ leagues, myTeamId }: { leagues: LeagueWi
 
           <div className="lg:col-span-3">
             {activeLeague ? (
-              <div className="bg-white border border-gray-100 rounded-lg overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-medium text-gray-900">{activeLeague.name}</h2>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      Code: <span className="font-mono text-gray-600">{activeLeague.code}</span>
-                    </p>
-                  </div>
+              <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div className="bg-[#37003c] px-4 py-3 flex items-center justify-between gap-3">
+                  <h2 className="text-sm font-bold text-white truncate">{activeLeague.name}</h2>
+                  <span className="text-[11px] text-white/60 flex-shrink-0">
+                    Code: <span className="font-mono font-bold text-[#00ff87]">{activeLeague.code}</span>
+                  </span>
                 </div>
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-100">
-                      <th className="text-left px-4 py-2.5 text-xs text-gray-400 w-8">#</th>
-                      <th className="text-left px-4 py-2.5 text-xs text-gray-400">Team</th>
-                      <th className="text-right px-4 py-2.5 text-xs text-gray-400">Pts</th>
+                      <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400 w-12">Rank</th>
+                      <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">Team</th>
+                      <th className="text-right px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">Total</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {standings.map((team, i) => {
                       const isMe = team?.user_id === myTeamId
                       return (
-                        <tr key={i} className={isMe ? 'bg-gray-50' : 'hover:bg-gray-50'}>
-                          <td className="px-4 py-3 text-sm text-gray-400">{i + 1}</td>
+                        <tr key={i} className={isMe ? 'bg-[#00ff87]/10' : 'hover:bg-[#37003c]/5'}>
+                          <td className="px-4 py-3 font-barlow font-bold text-[#37003c]">{i + 1}</td>
                           <td className="px-4 py-3">
-                            <span className="text-sm text-gray-900">{team?.name}</span>
-                            {isMe && <span className="ml-2 text-xs text-gray-400">(you)</span>}
+                            <span className="text-sm font-semibold text-[#37003c]">{team?.name}</span>
+                            {isMe && <span className="ml-2 text-[10px] font-bold text-[#37003c] bg-[#00ff87] rounded px-1.5 py-0.5">YOU</span>}
                           </td>
-                          <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">{team?.total_points}</td>
+                          <td className="px-4 py-3 text-right font-barlow font-bold text-lg text-[#37003c]">{team?.total_points}</td>
                         </tr>
                       )
                     })}
@@ -135,7 +138,7 @@ export default function LeaguesClient({ leagues, myTeamId }: { leagues: LeagueWi
                 </table>
               </div>
             ) : (
-              <div className="bg-white border border-gray-100 rounded-lg p-12 text-center text-sm text-gray-400">
+              <div className="bg-white border border-gray-200 rounded-lg p-12 text-center text-sm text-gray-400">
                 Select a league to see standings.
               </div>
             )}
@@ -144,8 +147,8 @@ export default function LeaguesClient({ leagues, myTeamId }: { leagues: LeagueWi
       )}
 
       {tab === 'create' && (
-        <div className="bg-white border border-gray-100 rounded-lg p-5 max-w-sm">
-          <h2 className="text-sm font-medium text-gray-900 mb-4">Create a league</h2>
+        <div className="bg-white border border-gray-200 rounded-lg p-5 max-w-sm">
+          <h2 className="text-sm font-bold text-[#37003c] mb-4">Create a league</h2>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
               <label className="block text-xs text-gray-500 mb-1.5">Name</label>
@@ -155,7 +158,7 @@ export default function LeaguesClient({ leagues, myTeamId }: { leagues: LeagueWi
                 required
                 maxLength={50}
                 placeholder="e.g. Office League"
-                className="w-full border border-gray-200 rounded-md px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-gray-400"
+                className={inputClass}
               />
             </div>
             <div>
@@ -166,18 +169,20 @@ export default function LeaguesClient({ leagues, myTeamId }: { leagues: LeagueWi
                     key={t}
                     type="button"
                     onClick={() => setCreateType(t)}
-                    className={`flex-1 py-2 rounded-md border text-sm transition-colors ${
-                      createType === t ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600 hover:border-gray-400'
+                    className={`flex-1 py-2 rounded-md border text-sm font-semibold transition-colors ${
+                      createType === t ? 'bg-[#37003c] text-white border-[#37003c]' : 'border-gray-200 text-gray-500 hover:border-[#37003c]/40'
                     }`}
                   >
-                    {t === 'classic' ? 'Classic' : 'H2H'}
+                    {t === 'classic' ? 'Classic' : 'Head-to-Head'}
                   </button>
                 ))}
               </div>
             </div>
 
             {msg && (
-              <div className={`rounded-md px-3 py-2.5 text-sm border ${msg.type === 'success' ? 'border-gray-200 text-gray-600' : 'border-red-200 text-red-600'}`}>
+              <div className={`rounded-md px-3 py-2.5 text-sm border ${
+                msg.type === 'success' ? 'border-[#00ff87] bg-[#00ff87]/10 text-[#37003c]' : 'border-[#e90052]/40 bg-[#e90052]/10 text-[#e90052]'
+              }`}>
                 {msg.text}
               </div>
             )}
@@ -185,17 +190,17 @@ export default function LeaguesClient({ leagues, myTeamId }: { leagues: LeagueWi
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gray-900 text-white text-sm font-medium rounded-md py-2.5 hover:bg-gray-800 transition-colors disabled:opacity-50"
+              className="w-full bg-[#00ff87] text-[#37003c] text-sm font-bold rounded-md py-2.5 hover:bg-[#00e57a] transition-colors disabled:opacity-50"
             >
-              {loading ? 'Creating…' : 'Create league'}
+              {loading ? 'Creating…' : 'Create League'}
             </button>
           </form>
         </div>
       )}
 
       {tab === 'join' && (
-        <div className="bg-white border border-gray-100 rounded-lg p-5 max-w-sm">
-          <h2 className="text-sm font-medium text-gray-900 mb-4">Join a league</h2>
+        <div className="bg-white border border-gray-200 rounded-lg p-5 max-w-sm">
+          <h2 className="text-sm font-bold text-[#37003c] mb-4">Join a league</h2>
           <form onSubmit={handleJoin} className="space-y-4">
             <div>
               <label className="block text-xs text-gray-500 mb-1.5">League code</label>
@@ -205,12 +210,14 @@ export default function LeaguesClient({ leagues, myTeamId }: { leagues: LeagueWi
                 required
                 maxLength={8}
                 placeholder="e.g. AB12CD"
-                className="w-full border border-gray-200 rounded-md px-3 py-2.5 text-sm text-gray-900 font-mono placeholder-gray-400 focus:outline-none focus:border-gray-400 tracking-widest"
+                className={`${inputClass} font-mono tracking-widest`}
               />
             </div>
 
             {msg && (
-              <div className={`rounded-md px-3 py-2.5 text-sm border ${msg.type === 'success' ? 'border-gray-200 text-gray-600' : 'border-red-200 text-red-600'}`}>
+              <div className={`rounded-md px-3 py-2.5 text-sm border ${
+                msg.type === 'success' ? 'border-[#00ff87] bg-[#00ff87]/10 text-[#37003c]' : 'border-[#e90052]/40 bg-[#e90052]/10 text-[#e90052]'
+              }`}>
                 {msg.text}
               </div>
             )}
@@ -218,9 +225,9 @@ export default function LeaguesClient({ leagues, myTeamId }: { leagues: LeagueWi
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gray-900 text-white text-sm font-medium rounded-md py-2.5 hover:bg-gray-800 transition-colors disabled:opacity-50"
+              className="w-full bg-[#00ff87] text-[#37003c] text-sm font-bold rounded-md py-2.5 hover:bg-[#00e57a] transition-colors disabled:opacity-50"
             >
-              {loading ? 'Joining…' : 'Join league'}
+              {loading ? 'Joining…' : 'Join League'}
             </button>
           </form>
         </div>

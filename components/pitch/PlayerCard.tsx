@@ -5,54 +5,73 @@ import type { FantasyPick, Player } from '@/types'
 interface PlayerCardProps {
   pick: FantasyPick & { players: Player }
   onClick?: () => void
-  compact?: boolean
+  /** Text shown in the bottom plate (price or points) */
+  value: string
+  /** Highlighted as an eligible substitution target */
+  highlight?: boolean
+  /** Dimmed while another substitution is in progress */
+  dimmed?: boolean
 }
 
 function ShirtSVG({ color }: { color: string }) {
+  // Simple FPL-style jersey: body + sleeves
   return (
-    <svg viewBox="0 0 40 40" width="36" height="36" fill="none">
+    <svg viewBox="0 0 44 44" width="44" height="44" fill="none">
+      {/* Sleeves */}
+      <path d="M10 8 L2 13 L6 22 L12 19 Z" fill={color} stroke="rgba(0,0,0,0.25)" strokeWidth="1" />
+      <path d="M34 8 L42 13 L38 22 L32 19 Z" fill={color} stroke="rgba(0,0,0,0.25)" strokeWidth="1" />
+      {/* Body */}
       <path
-        d="M5 10 L12 6 L16 10 C17 14 23 14 24 10 L28 6 L35 10 L32 18 L27 16 L27 34 L13 34 L13 16 L8 18 Z"
+        d="M10 8 L17 5 C18 9 26 9 27 5 L34 8 L32 19 L32 40 L12 40 L12 19 Z"
         fill={color}
-        stroke="rgba(255,255,255,0.3)"
+        stroke="rgba(0,0,0,0.25)"
         strokeWidth="1"
       />
+      {/* Collar */}
+      <path d="M17 5 C18 9 26 9 27 5" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" fill="none" />
     </svg>
   )
 }
 
-export default function PlayerCard({ pick, onClick, compact = false }: PlayerCardProps) {
+export default function PlayerCard({ pick, onClick, value, highlight = false, dimmed = false }: PlayerCardProps) {
   const player = pick.players
-  const shirtColor = player.real_teams?.primary_color ?? '#4ade80'
-  const isInjured = player.status !== 'available'
+  const shirtColor = player.real_teams?.primary_color ?? '#37003c'
+  const flagged = player.status !== 'available'
 
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-0.5 group cursor-pointer"
+      disabled={!onClick}
+      className={`flex flex-col items-center group w-[72px] transition-all ${
+        dimmed ? 'opacity-30' : ''
+      } ${highlight ? 'scale-105' : ''} ${onClick ? 'cursor-pointer' : 'cursor-default'}`}
     >
-      <div className="relative">
+      <div className={`relative rounded-md p-0.5 ${highlight ? 'ring-2 ring-[#04f5ff] bg-[#04f5ff]/20' : ''}`}>
         <ShirtSVG color={shirtColor} />
-        {isInjured && (
-          <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-[#0a1400]" />
+        {flagged && (
+          <span
+            className="absolute -top-1 -left-1 w-4 h-4 bg-[#ffe65b] rounded-full text-[#37003c] text-[10px] font-black flex items-center justify-center leading-none border border-[#37003c]/20"
+            title={player.status}
+          >!</span>
         )}
         {pick.is_captain && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-yellow-400 rounded-full text-black text-xs font-black flex items-center justify-center leading-none">C</span>
+          <span className="absolute -top-1 -right-1 w-[18px] h-[18px] bg-[#37003c] rounded-full text-white text-[10px] font-black flex items-center justify-center leading-none">C</span>
         )}
         {pick.is_vice_captain && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-gray-300 rounded-full text-black text-xs font-black flex items-center justify-center leading-none">V</span>
+          <span className="absolute -top-1 -right-1 w-[18px] h-[18px] bg-white border border-[#37003c] rounded-full text-[#37003c] text-[10px] font-black flex items-center justify-center leading-none">V</span>
         )}
       </div>
 
-      <div className="bg-[#0a1400]/90 border border-[#1f3d1f] rounded px-2 py-0.5 text-center min-w-[60px] group-hover:border-[#4ade80]/50 transition-colors">
-        <div className="font-barlow font-bold text-xs text-white uppercase truncate max-w-[72px]">
+      {/* Name plate */}
+      <div className={`w-full bg-white rounded-t-sm px-1 py-0.5 text-center shadow-sm ${highlight ? 'bg-[#04f5ff]/30' : ''}`}>
+        <div className="text-[11px] font-semibold text-[#37003c] truncate leading-tight">
           {player.display_name ?? player.name.split(' ').pop()}
         </div>
-        {!compact && (
-          <div className="font-barlow text-xs text-[#4ade80]">
-            {pick.points_scored ?? 0}
-          </div>
-        )}
+      </div>
+
+      {/* Value plate */}
+      <div className="w-full bg-[#37003c] rounded-b-sm px-1 py-0.5 text-center">
+        <div className="text-[11px] font-bold text-white leading-tight">{value}</div>
       </div>
     </button>
   )

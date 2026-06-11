@@ -30,45 +30,49 @@ export default async function FixturesPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="font-barlow font-black text-3xl text-gray-900">Fixtures</h1>
-        <p className="text-sm text-gray-400 mt-0.5">All matches across the season</p>
+    <div className="space-y-4">
+      <div className="fpl-hero rounded-lg px-5 py-5 sm:px-6">
+        <h1 className="font-barlow font-black text-3xl text-white leading-none">Fixtures</h1>
+        <p className="text-white/60 text-sm mt-1">All matches across the season</p>
       </div>
 
       {Object.entries(grouped).map(([gwId, gfixtures]) => {
         const gw = gwMap[gwId]
         return (
-          <div key={gwId}>
-            <div className="flex items-center gap-2 mb-2">
-              <h2 className="text-sm font-medium text-gray-900">Gameweek {gw?.number}</h2>
-              <span className="text-xs text-gray-400">{gw?.status ?? 'upcoming'}</span>
+          <div key={gwId} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="bg-[#37003c] px-4 py-2.5 flex items-center justify-between">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-white">Gameweek {gw?.number}</h2>
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                gw?.status === 'active' ? 'text-[#00ff87]' : gw?.status === 'finished' ? 'text-white/40' : 'text-[#04f5ff]'
+              }`}>
+                {gw?.status ?? 'upcoming'}
+              </span>
             </div>
 
-            <div className="bg-white border border-gray-100 rounded-lg overflow-hidden divide-y divide-gray-100">
+            <div className="divide-y divide-gray-100">
               {gfixtures.map(f => {
                 const home = (f as any).home_team as RealTeam | undefined
                 const away = (f as any).away_team as RealTeam | undefined
                 return (
                   <div key={f.id} className="flex items-center gap-3 px-4 py-3">
-                    <div className="flex-1 flex items-center gap-2 justify-end">
-                      <span className="text-sm text-gray-900 truncate text-right">{home?.name ?? '–'}</span>
+                    <div className="flex-1 flex items-center gap-2 justify-end min-w-0">
+                      <span className="text-sm font-semibold text-[#37003c] truncate text-right">{home?.name ?? '–'}</span>
                       <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: home?.primary_color ?? '#d1d5db' }} />
                     </div>
 
-                    <div className="flex-shrink-0 text-center w-20">
+                    <div className="flex-shrink-0 text-center w-24">
                       {f.played ? (
-                        <span className="font-barlow font-black text-lg text-gray-900">
-                          {f.home_score} <span className="text-gray-300">–</span> {f.away_score}
+                        <span className="bg-[#37003c] text-white font-barlow font-bold text-base rounded px-2.5 py-0.5">
+                          {f.home_score}–{f.away_score}
                         </span>
                       ) : (
-                        <span className="text-xs text-gray-400 leading-tight block">{formatKickoff(f.kickoff_time)}</span>
+                        <span className="text-[11px] text-gray-400 leading-tight block">{formatKickoff(f.kickoff_time)}</span>
                       )}
                     </div>
 
-                    <div className="flex-1 flex items-center gap-2">
+                    <div className="flex-1 flex items-center gap-2 min-w-0">
                       <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: away?.primary_color ?? '#d1d5db' }} />
-                      <span className="text-sm text-gray-900 truncate">{away?.name ?? '–'}</span>
+                      <span className="text-sm font-semibold text-[#37003c] truncate">{away?.name ?? '–'}</span>
                     </div>
                   </div>
                 )
@@ -79,7 +83,7 @@ export default async function FixturesPage() {
       })}
 
       {!fixtures?.length && (
-        <div className="bg-white border border-gray-100 rounded-lg p-12 text-center text-sm text-gray-400">
+        <div className="bg-white border border-gray-200 rounded-lg p-12 text-center text-sm text-gray-400">
           No fixtures scheduled yet.
         </div>
       )}

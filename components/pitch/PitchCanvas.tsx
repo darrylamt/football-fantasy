@@ -1,156 +1,165 @@
 'use client'
 
 import { useState } from 'react'
-import type { FantasyPick, Player, Formation } from '@/types'
+import type { FantasyPick, Player, Position } from '@/types'
 import PlayerCard from './PlayerCard'
 import BenchRow from './BenchRow'
-import FormationSelector from './FormationSelector'
 import Modal from '@/components/ui/Modal'
+import { formatPrice } from '@/lib/utils/format'
+
+type PickWithPlayer = FantasyPick & { players: Player }
 
 interface PitchCanvasProps {
-  picks: (FantasyPick & { players: Player })[]
-  onPicksChange?: (picks: (FantasyPick & { players: Player })[]) => void
+  picks: PickWithPlayer[]
+  onPicksChange?: (picks: PickWithPlayer[]) => void
   readonly?: boolean
+  /** What the bottom plate of each card shows */
+  valueMode?: 'price' | 'points'
 }
 
-function parseFormation(f: Formation): [number, number, number] {
-  const parts = f.split('-').map(Number)
-  return [parts[0], parts[1], parts[2]] as [number, number, number]
+const FORMATION_LIMITS: Record<Exclude<Position, 'GK'>, [number, number]> = {
+  DEF: [3, 5],
+  MID: [2, 5],
+  FWD: [1, 3],
 }
 
-export default function PitchCanvas({ picks, onPicksChange, readonly = false }: PitchCanvasProps) {
-  const [formation, setFormation] = useState<Formation>('4-4-2')
-  const [selectedPick, setSelectedPick] = useState<(FantasyPick & { players: Player }) | null>(null)
+export default function PitchCanvas({ picks, onPicksChange, readonly = false, valueMode = 'price' }: PitchCanvasProps) {
+  const [selectedPick, setSelectedPick] = useState<PickWithPlayer | null>(null)
+  const [subSource, setSubSource] = useState<PickWithPlayer | null>(null)
 
   const starters = picks.filter(p => p.is_starting)
   const bench = picks.filter(p => !p.is_starting)
 
-  const gks = starters.filter(p => p.players.position === 'GK')
-  const defs = starters.filter(p => p.players.position === 'DEF')
-  const mids = starters.filter(p => p.players.position === 'MID')
-  const fwds = starters.filter(p => p.players.position === 'FWD')
+  const rows: PickWithPlayer[][] = [
+    starters.filter(p => p.players.position === 'GK'),
+    starters.filter(p => p.players.position === 'DEF'),
+    starters.filter(p => p.players.position === 'MID'),
+    starters.filter(p => p.players.position === 'FWD'),
+  ]
 
-  const [defCount, midCount, fwdCount] = parseFormation(formation)
-
-  function handleFormationChange(f: Formation) {
-    setFormation(f)
-    // Formation is cosmetic only for display — actual squad stays same
-    // Real re-arrangement would need pick editing logic
+  function valueFor(pick: PickWithPlayer): string {
+    if (valueMode === 'points') return `${pick.points_scored ?? 0} pts`
+    return formatPrice(Number(pick.players.price))
   }
 
-  function makeCaptain(pick: FantasyPick & { players: Player }) {
+  /** Can `starter` and `benchPick` legally swap (formation stays valid)? */
+  function canSwap(a: PickWithPlayer, b: PickWithPlayer): boolean {
+    const starter = a.is_starting ? a : b
+    const benchPick = a.is_starting ? b : a
+    if (starter.is_starting === benchPick.is_starting) return false
+
+    const sPos = starter.players.position
+    const bPos = benchPick.players.position
+
+    // GK can only swap with GK
+    if (sPos === 'GK' || bPos === 'GK') return sPos === 'GK' && bPos === 'GK'
+    if (sPos === bPos) return true
+
+    // Cross-position swap: check resulting formation
+    const counts: Record<Exclude<Position, 'GK'>, number> = { DEF: 0, MID: 0, FWD: 0 }
+    for (const p of starters) {
+      if (p.id === starter.id) continue
+      if (p.players.position !== 'GK') counts[p.players.position as Exclude<Position, 'GK'>]++
+    }
+    counts[bPos as Exclude<Position, 'GK'>]++
+
+    return (Object.keys(FORMATION_LIMITS) as Array<Exclude<Position, 'GK'>>).every(pos => {
+      const [min, max] = FORMATION_LIMITS[pos]
+      return counts[pos] >= min && counts[pos] <= max
+    })
+  }
+
+  const eligibleIds = subSource
+    ? picks.filter(p => p.id !== subSource.id && canSwap(subSource, p)).map(p => p.id)
+    : []
+
+  function executeSwap(target: PickWithPlayer) {
+    if (!onPicksChange || !subSource) return
+    const starter = subSource.is_starting ? subSource : target
+    const benchPick = subSource.is_starting ? target : subSource
+
+    const updated = picks.map(p => {
+      if (p.id === starter.id) {
+        // Heading to the bench: lose armband
+        return { ...p, is_starting: false, bench_order: benchPick.bench_order, is_captain: false, is_vice_captain: false }
+      }
+      if (p.id === benchPick.id) {
+        return { ...p, is_starting: true, bench_order: undefined }
+      }
+      return p
+    })
+    onPicksChange(updated)
+    setSubSource(null)
+  }
+
+  function handleCardClick(pick: PickWithPlayer) {
+    if (readonly) return
+    if (subSource) {
+      if (pick.id === subSource.id) { setSubSource(null); return }
+      if (eligibleIds.includes(pick.id)) executeSwap(pick)
+      return
+    }
+    setSelectedPick(pick)
+  }
+
+  function makeCaptain(pick: PickWithPlayer) {
     if (!onPicksChange) return
-    const updated = picks.map(p => ({
+    onPicksChange(picks.map(p => ({
       ...p,
       is_captain: p.id === pick.id,
-      is_vice_captain: p.is_vice_captain && p.id !== pick.id,
-    }))
-    onPicksChange(updated)
+      is_vice_captain: p.id === pick.id ? false : p.is_vice_captain,
+    })))
     setSelectedPick(null)
   }
 
-  function makeViceCaptain(pick: FantasyPick & { players: Player }) {
+  function makeViceCaptain(pick: PickWithPlayer) {
     if (!onPicksChange) return
-    const updated = picks.map(p => ({
+    onPicksChange(picks.map(p => ({
       ...p,
       is_vice_captain: p.id === pick.id,
-      is_captain: p.is_captain && p.id !== pick.id,
-    }))
-    onPicksChange(updated)
+      is_captain: p.id === pick.id ? false : p.is_captain,
+    })))
     setSelectedPick(null)
   }
-
-  function moveToStarter(pick: FantasyPick & { players: Player }) {
-    if (!onPicksChange) return
-    // Find a starter with same position to swap with bench slot 1
-    const samePosBenchPick = bench.find(p => p.players.position === pick.players.position)
-    if (!samePosBenchPick) return
-
-    const updated = picks.map(p => {
-      if (p.id === pick.id) return { ...p, is_starting: true, bench_order: undefined }
-      if (p.id === samePosBenchPick.id) return { ...p, is_starting: false, bench_order: pick.bench_order }
-      return p
-    })
-    onPicksChange(updated)
-    setSelectedPick(null)
-  }
-
-  function moveToBench(pick: FantasyPick & { players: Player }) {
-    if (!onPicksChange) return
-    const nextSlot = (bench.reduce((max, b) => Math.max(max, b.bench_order ?? 0), 0)) + 1
-    const updated = picks.map(p => {
-      if (p.id === pick.id) return { ...p, is_starting: false, bench_order: nextSlot, is_captain: false, is_vice_captain: false }
-      return p
-    })
-    onPicksChange(updated)
-    setSelectedPick(null)
-  }
-
-  const rows: (FantasyPick & { players: Player })[][] = [
-    fwds.slice(0, fwdCount),
-    mids.slice(0, midCount),
-    defs.slice(0, defCount),
-    gks.slice(0, 1),
-  ]
 
   return (
     <div className="w-full">
-      {!readonly && (
-        <div className="mb-4">
-          <FormationSelector value={formation} onChange={handleFormationChange} />
+      {subSource && (
+        <div className="mb-2 bg-[#04f5ff]/15 border border-[#04f5ff] rounded-md px-3 py-2 flex items-center justify-between gap-3">
+          <span className="text-sm text-[#37003c]">
+            Substituting <strong>{subSource.players.display_name ?? subSource.players.name}</strong> — select a highlighted player
+          </span>
+          <button onClick={() => setSubSource(null)} className="text-xs font-semibold text-[#37003c] underline flex-shrink-0">
+            Cancel
+          </button>
         </div>
       )}
 
       {/* Pitch */}
-      <div
-        className="relative rounded-2xl overflow-hidden border border-[#1f3d1f]"
-        style={{
-          background: 'linear-gradient(180deg, #0d2b0d 0%, #0a2000 50%, #0d2b0d 100%)',
-          minHeight: 480,
-        }}
-      >
-        {/* SVG pitch markings */}
-        <svg
-          className="absolute inset-0 w-full h-full opacity-20"
-          viewBox="0 0 400 480"
-          preserveAspectRatio="none"
-        >
-          {/* Outer border */}
-          <rect x="20" y="20" width="360" height="440" stroke="white" strokeWidth="2" fill="none" />
-          {/* Halfway line */}
-          <line x1="20" y1="240" x2="380" y2="240" stroke="white" strokeWidth="1.5" />
-          {/* Centre circle */}
-          <circle cx="200" cy="240" r="50" stroke="white" strokeWidth="1.5" fill="none" />
-          <circle cx="200" cy="240" r="3" fill="white" />
-          {/* Top penalty area */}
-          <rect x="100" y="20" width="200" height="80" stroke="white" strokeWidth="1.5" fill="none" />
-          <rect x="145" y="20" width="110" height="40" stroke="white" strokeWidth="1.5" fill="none" />
-          {/* Bottom penalty area */}
-          <rect x="100" y="380" width="200" height="80" stroke="white" strokeWidth="1.5" fill="none" />
-          <rect x="145" y="440" width="110" height="40" stroke="white" strokeWidth="1.5" fill="none" />
-          {/* Corner arcs */}
-          <path d="M20,20 Q30,20 30,30" stroke="white" strokeWidth="1.5" fill="none" />
-          <path d="M380,20 Q370,20 370,30" stroke="white" strokeWidth="1.5" fill="none" />
-          <path d="M20,460 Q30,460 30,450" stroke="white" strokeWidth="1.5" fill="none" />
-          <path d="M380,460 Q370,460 370,450" stroke="white" strokeWidth="1.5" fill="none" />
-          {/* Penalty spots */}
-          <circle cx="200" cy="75" r="3" fill="white" />
-          <circle cx="200" cy="405" r="3" fill="white" />
-          {/* Stripes */}
-          {Array.from({ length: 10 }).map((_, i) => (
-            <rect key={i} x={20 + i * 36} y="20" width="18" height="440" fill="white" opacity="0.03" />
-          ))}
+      <div className="relative rounded-lg overflow-hidden fpl-pitch">
+        {/* Pitch markings */}
+        <svg className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" viewBox="0 0 400 520" preserveAspectRatio="none">
+          <rect x="12" y="12" width="376" height="496" stroke="white" strokeWidth="2" fill="none" />
+          {/* Goal + penalty area at top */}
+          <rect x="100" y="12" width="200" height="70" stroke="white" strokeWidth="2" fill="none" />
+          <rect x="150" y="12" width="100" height="30" stroke="white" strokeWidth="2" fill="none" />
+          <path d="M150,82 A55,55 0 0,0 250,82" stroke="white" strokeWidth="2" fill="none" />
+          {/* Halfway + centre circle at bottom */}
+          <line x1="12" y1="508" x2="388" y2="508" stroke="white" strokeWidth="2" />
+          <path d="M140,508 A62,62 0 0,1 260,508" stroke="white" strokeWidth="2" fill="none" />
         </svg>
 
-        {/* Players */}
-        <div className="relative z-10 flex flex-col justify-around py-6 px-4 min-h-[480px]">
+        <div className="relative z-10 flex flex-col justify-between py-5 px-2 min-h-[500px]">
           {rows.map((row, i) => (
-            <div key={i} className="flex justify-around items-center">
+            <div key={i} className="flex justify-evenly items-start">
               {row.map(pick => (
                 <PlayerCard
                   key={pick.id}
                   pick={pick}
-                  onClick={readonly ? undefined : () => setSelectedPick(pick)}
+                  onClick={readonly ? undefined : () => handleCardClick(pick)}
+                  value={valueFor(pick)}
+                  highlight={eligibleIds.includes(pick.id)}
+                  dimmed={!!subSource && pick.id !== subSource.id && !eligibleIds.includes(pick.id)}
                 />
               ))}
             </div>
@@ -159,28 +168,32 @@ export default function PitchCanvas({ picks, onPicksChange, readonly = false }: 
       </div>
 
       {/* Bench */}
-      <div className="mt-4 bg-[#0d1f0d] border border-[#1f3d1f] rounded-xl py-4 px-2">
+      <div className="mt-2 bg-white rounded-lg py-3 px-2 border border-[#37003c]/10">
+        <div className="text-center text-[10px] font-bold uppercase tracking-widest text-[#37003c]/40 mb-2">Substitutes</div>
         <BenchRow
           bench={bench}
-          onPlayerClick={readonly ? undefined : setSelectedPick}
+          onPlayerClick={readonly ? undefined : handleCardClick}
+          valueFor={valueFor}
+          highlightIds={eligibleIds}
+          dimOthers={!!subSource}
         />
       </div>
 
-      {/* Player action modal */}
-      {!readonly && selectedPick && (
+      {/* Player action dialog */}
+      {!readonly && selectedPick && !subSource && (
         <Modal
           open={!!selectedPick}
           onClose={() => setSelectedPick(null)}
           title={selectedPick.players.display_name ?? selectedPick.players.name}
         >
           <div className="space-y-2">
-            <div className="text-sm text-gray-400 mb-4">
-              {selectedPick.players.position} · {selectedPick.players.real_teams?.name} · ₵{Number(selectedPick.players.price).toFixed(1)}m
+            <div className="text-sm text-gray-500 mb-4">
+              {selectedPick.players.position} · {selectedPick.players.real_teams?.name} · {formatPrice(Number(selectedPick.players.price))} · {selectedPick.players.total_points} pts
             </div>
             {selectedPick.is_starting && !selectedPick.is_captain && (
               <button
                 onClick={() => makeCaptain(selectedPick)}
-                className="w-full text-left px-4 py-3 bg-[#0d1f0d] hover:bg-[#1f3d1f] rounded-lg text-yellow-400 font-barlow font-bold uppercase text-sm transition-colors"
+                className="w-full text-left px-4 py-3 bg-[#f4f4f6] hover:bg-[#00ff87]/30 rounded-md text-[#37003c] font-semibold text-sm transition-colors"
               >
                 Make Captain
               </button>
@@ -188,30 +201,20 @@ export default function PitchCanvas({ picks, onPicksChange, readonly = false }: 
             {selectedPick.is_starting && !selectedPick.is_vice_captain && !selectedPick.is_captain && (
               <button
                 onClick={() => makeViceCaptain(selectedPick)}
-                className="w-full text-left px-4 py-3 bg-[#0d1f0d] hover:bg-[#1f3d1f] rounded-lg text-gray-300 font-barlow font-bold uppercase text-sm transition-colors"
+                className="w-full text-left px-4 py-3 bg-[#f4f4f6] hover:bg-[#00ff87]/30 rounded-md text-[#37003c] font-semibold text-sm transition-colors"
               >
-                Make Vice Captain
-              </button>
-            )}
-            {selectedPick.is_starting && (
-              <button
-                onClick={() => moveToBench(selectedPick)}
-                className="w-full text-left px-4 py-3 bg-[#0d1f0d] hover:bg-[#1f3d1f] rounded-lg text-white font-barlow font-bold uppercase text-sm transition-colors"
-              >
-                Move to Bench
-              </button>
-            )}
-            {!selectedPick.is_starting && (
-              <button
-                onClick={() => moveToStarter(selectedPick)}
-                className="w-full text-left px-4 py-3 bg-[#0d1f0d] hover:bg-[#1f3d1f] rounded-lg text-[#4ade80] font-barlow font-bold uppercase text-sm transition-colors"
-              >
-                Move to Starting XI
+                Make Vice-Captain
               </button>
             )}
             <button
+              onClick={() => { setSubSource(selectedPick); setSelectedPick(null) }}
+              className="w-full text-left px-4 py-3 bg-[#f4f4f6] hover:bg-[#04f5ff]/30 rounded-md text-[#37003c] font-semibold text-sm transition-colors"
+            >
+              Substitute
+            </button>
+            <button
               onClick={() => setSelectedPick(null)}
-              className="w-full text-left px-4 py-3 bg-[#0d1f0d] hover:bg-[#1f3d1f] rounded-lg text-gray-500 font-barlow font-bold uppercase text-sm transition-colors"
+              className="w-full text-left px-4 py-3 bg-[#f4f4f6] hover:bg-gray-200 rounded-md text-gray-500 font-semibold text-sm transition-colors"
             >
               Cancel
             </button>

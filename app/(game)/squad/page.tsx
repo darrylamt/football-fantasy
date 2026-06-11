@@ -15,18 +15,24 @@ export default async function SquadPage() {
 
   if (!fantasyTeam || !gameweek) {
     return (
-      <div className="text-center py-20">
-        <div className="font-barlow font-bold text-2xl text-white">No active season</div>
-        <div className="text-gray-400 mt-2">Check back when a gameweek is active.</div>
+      <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
+        <div className="font-barlow font-bold text-2xl text-[#37003c]">No active season</div>
+        <div className="text-gray-400 mt-2 text-sm">Check back when a gameweek is active.</div>
       </div>
     )
   }
 
-  const { data: existingPicks } = await supabase
-    .from('fantasy_picks')
-    .select('*, players(*, real_teams(*))')
-    .eq('fantasy_team_id', fantasyTeam.id)
-    .eq('gameweek_id', gameweek.id)
+  const [{ data: existingPicks }, { data: chipsUsed }] = await Promise.all([
+    supabase
+      .from('fantasy_picks')
+      .select('*, players(*, real_teams(*))')
+      .eq('fantasy_team_id', fantasyTeam.id)
+      .eq('gameweek_id', gameweek.id),
+    supabase
+      .from('chips_used')
+      .select('*')
+      .eq('fantasy_team_id', fantasyTeam.id),
+  ])
 
   return (
     <SquadClient
@@ -34,6 +40,7 @@ export default async function SquadPage() {
       gameweek={gameweek}
       allPlayers={allPlayers ?? []}
       initialPicks={(existingPicks ?? []) as any}
+      chipsUsed={chipsUsed ?? []}
     />
   )
 }
