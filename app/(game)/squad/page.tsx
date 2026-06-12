@@ -13,7 +13,9 @@ export default async function SquadPage() {
     supabase.from('players').select('*, real_teams(*)').order('position').order('total_points', { ascending: false }),
   ])
 
-  if (!fantasyTeam || !gameweek) {
+  if (!fantasyTeam) redirect('/welcome')
+
+  if (!gameweek) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
         <div className="font-barlow font-bold text-2xl text-[#37003c]">No active season</div>

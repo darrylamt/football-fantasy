@@ -30,7 +30,7 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Protect game routes
-  if (pathname.startsWith('/(game)') || ['/squad', '/transfers', '/points', '/players', '/fixtures', '/leagues'].some(p => pathname.startsWith(p))) {
+  if (pathname.startsWith('/(game)') || ['/squad', '/transfers', '/points', '/players', '/fixtures', '/leagues', '/results', '/welcome'].some(p => pathname.startsWith(p))) {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }

@@ -12,7 +12,7 @@
 
 insert into admin_users (user_id)
 select id from auth.users
-where email = 'amoateydarryl4@gmail.com'
+where email in ('amoateydarryl4@gmail.com', 'damoatey@icloud.com')
 on conflict (user_id) do nothing;
 
 -- Verify it worked (should return one row):

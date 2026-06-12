@@ -101,8 +101,8 @@ export default async function HomePage() {
           </div>
         ) : (
           <div className="mt-6 bg-white/10 rounded-md px-4 py-3 max-w-xl flex items-center justify-between gap-3 backdrop-blur-sm">
-            <span className="text-sm text-white/80">You don't have a team yet — pick your squad to join.</span>
-            <Link href="/squad" className="flex-shrink-0 bg-[#00ff87] text-[#37003c] text-xs font-bold px-3 py-2 rounded-md hover:bg-[#00e57a] transition-colors">
+            <span className="text-sm text-white/80">You don't have a team yet — create your club to join.</span>
+            <Link href="/welcome" className="flex-shrink-0 bg-[#00ff87] text-[#37003c] text-xs font-bold px-3 py-2 rounded-md hover:bg-[#00e57a] transition-colors">
               Get started
             </Link>
           </div>
@@ -123,7 +123,7 @@ export default async function HomePage() {
               const home = (f as any).home_team as RealTeam
               const away = (f as any).away_team as RealTeam
               return (
-                <div key={f.id} className="flex items-center gap-2 px-4 py-2.5">
+                <Link key={f.id} href={`/results/${f.id}`} className="flex items-center gap-2 px-4 py-2.5 hover:bg-[#37003c]/5 transition-colors">
                   <div className="flex-1 flex items-center gap-1.5 justify-end min-w-0">
                     <span className="text-xs font-semibold text-[#37003c] truncate">{home?.short_name}</span>
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: home?.primary_color ?? '#d1d5db' }} />
@@ -137,7 +137,7 @@ export default async function HomePage() {
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: away?.primary_color ?? '#d1d5db' }} />
                     <span className="text-xs font-semibold text-[#37003c] truncate">{away?.short_name}</span>
                   </div>
-                </div>
+                </Link>
               )
             })}
           </div>

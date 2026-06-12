@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 import type { RealTeam } from '@/types'
 
 function formatDate(dt?: string) {
@@ -76,7 +77,7 @@ export default async function ResultsPage() {
                 const away = (f as any).away_team as RealTeam | undefined
                 const fScorers = scorerMap[f.id] ?? []
                 return (
-                  <div key={f.id} className="px-4 py-3">
+                  <Link key={f.id} href={`/results/${f.id}`} className="block px-4 py-3 hover:bg-[#37003c]/5 transition-colors group">
                     <div className="flex items-center gap-3">
                       <div className="flex-1 flex items-center gap-2 justify-end min-w-0">
                         <span className="text-sm font-semibold text-[#37003c] truncate text-right">{home?.name ?? '–'}</span>
@@ -107,11 +108,11 @@ export default async function ResultsPage() {
                           : <span className="text-gray-300">No scorers recorded</span>
                         }
                       </div>
-                      {f.kickoff_time && (
-                        <span className="text-[11px] text-gray-300 flex-shrink-0 ml-4">{formatDate(f.kickoff_time)}</span>
-                      )}
+                      <span className="text-[11px] text-gray-300 flex-shrink-0 ml-4 group-hover:text-[#37003c] transition-colors">
+                        {f.kickoff_time ? `${formatDate(f.kickoff_time)} ` : ''}›
+                      </span>
                     </div>
-                  </div>
+                  </Link>
                 )
               })}
             </div>
